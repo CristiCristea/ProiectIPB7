@@ -141,36 +141,92 @@ public class DatabaseServiceImpl implements DatabaseService{
         return null;
     }
 
-    /*9.
-    Descriere: Metoda ce returneaza o lista de comisii.
-    Input:  - None
-    Output: - O lista de co	misii de forma: { int id; String nume_comisie; String data_examinare; }
-    (Forma data_examinare: '12-02-2017' adica 'DD-MM-YYYY')*/
-    @Override
-    public List<CommitteListResponse> getCommitteList(String token) {
-        return null;
-    }
+    /*
+	 * 9. Descriere: Metoda ce returneaza o lista de comisii. Input: - None
+	 * Output: - O lista de comisii de forma: { int id; String nume_comisie;
+	 * String data_examinare; } (Forma data_examinare: '12-02-2017' adica
+	 * 'DD-MM-YYYY')
+	 */
+	@Override
+	public List<CommitteListResponse> getCommitteList(String token) {
+		List<CommitteListResponse> committeeList = new ArrayList<CommitteListResponse>();
 
-    /*10.
-    Descriere: Metoda ce returneaza profesorii dintr-o comisie.
-    Input:  - id_comisie (Integer)
-    Output: - Lista de profesori din acea comisie
-    (o lista cu id-urile acestora este destul, se poate folosi metoda nr. 5 pentru alte informatii).*/
+		// aici trebuie verificat ce fel de utilizator este cu ajutorul
+		// token-ului ..
 
-    @Override
-    public List<IdResponse> getProfsFromCommitte(int idCommitte) {
-        return null;
-    }
+		// daca utilizator are drept de acces la o astfel de actiune ( Secretar
+		// sau Admin)
 
-    /*11.
-    Descriere: Metoda ce returneaza profesorii neasignati unei comisii.
-    Input:  - None
-    Output: - Lista de profesori neasignati
-    (o lista cu id-urile acestora este destul, se poate folosi metoda nr. 5 pentru alte informatii).*/
-    @Override
-    public List<IdResponse> getProfsWithoutCommitte(String token) {
-        return null;
-    }
+		bd.login("Admin", "Root");
+		AccessBD access = bd.getAccess();
+		AccessAdminBD accessAdmin = (AccessAdminBD) access;// presupunem ca este
+															// admin
+		List<IntrareComisii> listaComisii = accessAdmin.selectComisii();
+
+		for (IntrareComisii c : listaComisii) {
+			CommitteListResponse comListRes = new CommitteListResponse();
+			comListRes.id = c.getId();
+			comListRes.numeComisie = "Comisie "+ comListRes.id;
+			comListRes.dataExaminare = c.getDataEvaluare();
+			committeeList.add(comListRes);
+		}
+
+		return committeeList;
+	}
+
+	/*
+	 * 10. Descriere: Metoda ce returneaza profesorii dintr-o comisie. Input: -
+	 * id_comisie (Integer) Output: - Lista de profesori din acea comisie (o
+	 * lista cu id-urile acestora este destul, se poate folosi metoda nr. 5
+	 * pentru alte informatii).
+	 */
+
+	@Override
+	public List<IdResponse> getProfsFromCommitte(int idCommittee) {
+
+		IntrareComisii comisie = bd.getAccess().getCommitteeById(idCommittee);
+		List<Integer> idProfiComisie = new ArrayList<Integer>();
+
+		idProfiComisie.add(comisie.getIdProfSef()); // la indexul 0 se va afla
+													// id-ul Sefului de comisie
+		idProfiComisie.add(comisie.getIdProf2());// la indexul 1 se va afla
+													// id-ul profului2
+		idProfiComisie.add(comisie.getIdProf3());// la indexul 0 se va afla
+													// id-ul profului3
+
+		if (comisie.getIdProf4() != 0) // daca exista al 4 lea
+										// profesor(dizertatie) => id_ul
+										// profului 4 la indexul3
+			idProfiComisie.add(comisie.getIdProf4());
+
+		List<IdResponse> result = new ArrayList<IdResponse>();
+		for (Integer i : idProfiComisie) {
+			IdResponse idRes = new IdResponse();
+			idRes.id = idProfiComisie.get(i - 1);
+			result.add(idRes);
+		}
+		return result;
+
+	}
+
+	/*
+	 * 11. Descriere: Metoda ce returneaza profesorii neasignati unei comisii.
+	 * Input: - None Output: - Lista de profesori neasignati (o lista cu
+	 * id-urile acestora este destul, se poate folosi metoda nr. 5 pentru alte
+	 * informatii).
+	 */
+	@Override
+	public List<IdResponse> getProfsWithoutCommitte(String token) {
+		List<IdResponse> profsWithoutCommitteeIdList = new ArrayList<IdResponse>();
+		List<IntrareProfesori> profsWithoutCommitteeList = bd.getAccess().getProfesorsWithoutCommittee();
+
+		for (IntrareProfesori p : profsWithoutCommitteeList) {
+			IdResponse idRes = new IdResponse();
+			idRes.id = p.getId();
+			profsWithoutCommitteeIdList.add(idRes);
+		}
+		return profsWithoutCommitteeIdList;
+	}
 
     /*12.
     Descriere: Metoda ce va muta un profesor din orice comisie ar fi
