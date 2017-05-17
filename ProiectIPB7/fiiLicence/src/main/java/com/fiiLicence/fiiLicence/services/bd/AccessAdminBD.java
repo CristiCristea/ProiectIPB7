@@ -107,13 +107,14 @@ public class AccessAdminBD extends AccessBD {
 		}		
 	}
 	
+	
 	public List<IntrareComisii> selectComisii(){
 		List<IntrareComisii> rezultat = new ArrayList<IntrareComisii>();
 		try{
 			
-			PreparedStatement pStatement = conexiune.prepareStatement("Select * from comisii");
+			PreparedStatement pStatement = conexiune.prepareStatement("SELECT * FROM comisii c join evaluari e on c.id = e.id_comisie");
 			ResultSet result = pStatement.executeQuery(); 
-			while(result.next() && result!=null){
+			while(result.next() ){
 				IntrareComisii intrare = new IntrareComisii();
 				intrare.setId(result.getInt(1));
 				intrare.setIdProfSef(result.getInt(2));
@@ -123,6 +124,9 @@ public class AccessAdminBD extends AccessBD {
 				intrare.setIdSecretar(result.getInt(6));
 				intrare.setTipComisie(result.getString(7));
 				intrare.setIdEvaluare(result.getInt(8));
+				intrare.setDataEvaluare(result.getString(12) + " ---> " + result.getString(13));
+				
+			
 				rezultat.add(intrare);
 			}
 			return rezultat;
