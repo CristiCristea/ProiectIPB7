@@ -179,20 +179,19 @@ public class HTTPController {
         return new ResponseEntity<List<IdResponse>>(databaseService.getProfsWithoutCommitte(token), HttpStatus.OK);
     }
 
-    //12 ---------------------------------------- /MOVEPROFTOCOMMITTE -------------------------------------------------
+      //12 ---------------------------------------- /MOVEPROFTOCOMMITTE -------------------------------------------------
     //@CrossOrigin(origins = "http://localhost:4200")
     @RequestMapping(value = "/moveProfToCommitte", method = RequestMethod.POST)
     public ResponseEntity<RegistrationResponse> moveProfToCommitte(@RequestHeader("Authorization") String token, @RequestBody MoveProfRequest request) {
 
-        boolean result = databaseService.moveProfToCommitte(request.idProf,request.idCommitte);
+        boolean result = databaseService.moveProfToCommitte(request.idProf,request.idCommitte,token);
 
         RegistrationResponse response = new RegistrationResponse();
         response.response = result;
 
-        System.out.println("------ /moveProfToCommitte - " + request.idProf +" " + request.idCommitte + " - " + result + " ------");
+        System.out.println("------ /moveProfToCommitte - " + request.idProf +" " + request.idCommitte + token + " - " + result + " ------");
         return new ResponseEntity<RegistrationResponse>(response, HttpStatus.OK);
     }
-
     //13 ---------------------------------------- /GETPROFSWITHOUTCOMMITTE -------------------------------------------------
     //@CrossOrigin(origins = "http://localhost:4200")
     @RequestMapping(value = "/getEvaluateStudentsByCommitte", method = RequestMethod.POST)
@@ -209,17 +208,17 @@ public class HTTPController {
         return new ResponseEntity<List<StudentResponse>>(databaseService.getEvaluateStudentsByCommitte(request.id), HttpStatus.OK);
     }
 
-    //14 ---------------------------------------- /PROFNOTE -------------------------------------------------
+      //14 ---------------------------------------- /PROFNOTE -------------------------------------------------
     //@CrossOrigin(origins = "http://localhost:4200")
     @RequestMapping(value = "/profNote", method = RequestMethod.POST)
     public ResponseEntity<RegistrationResponse> profNote(@RequestHeader("Authorization") String token, @RequestBody ProfNoteRequest request) {
 
-        boolean result = databaseService.profNote(request.idProf,request.idStudent,request.grade);
+        boolean result = databaseService.profNote(request.idProf,request.idStudent,request.gradeOral,request.gradeProiect);
 
         RegistrationResponse response = new RegistrationResponse();
         response.response = result;
 
-        System.out.println("------ /profNote - " + request.idProf +" " + request.idStudent+" "+request.grade + " - " + result + " ------");
+        System.out.println("------ /profNote - " + request.idProf +" " + request.idStudent+" "+request.gradeOral + request.gradeProiect+ " - " + result + " ------");
         return new ResponseEntity<RegistrationResponse>(response, HttpStatus.OK);
     }
 
