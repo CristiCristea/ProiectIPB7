@@ -141,102 +141,229 @@ public class DatabaseServiceImpl implements DatabaseService{
         return null;
     }
 
-    /*
-	 * 9. Descriere: Metoda ce returneaza o lista de comisii. Input: - None
-	 * Output: - O lista de comisii de forma: { int id; String nume_comisie;
-	 * String data_examinare; } (Forma data_examinare: '12-02-2017' adica
-	 * 'DD-MM-YYYY')
-	 */
-	@Override
-	public List<CommitteListResponse> getCommitteList(String token) {
-		List<CommitteListResponse> committeeList = new ArrayList<CommitteListResponse>();
+      /*9.
+    Descriere: Metoda ce returneaza o lista de comisii.
+    Input:  - None
+    Output: - O lista de co	misii de forma: { int id; String nume_comisie; String data_examinare; }
+    (Forma data_examinare: '12-02-2017' adica 'DD-MM-YYYY')*/
+    @Override
+    public List<CommitteListResponse> getCommitteList(String token) {
+        List<CommitteListResponse> committeeList = new ArrayList<CommitteListResponse>();
 
-		// aici trebuie verificat ce fel de utilizator este cu ajutorul
-		// token-ului ..
+        // aici trebuie verificat ce fel de utilizator este cu ajutorul
+        // token-ului ..
 
-		// daca utilizator are drept de acces la o astfel de actiune ( Secretar
-		// sau Admin)
+        // daca utilizator are drept de acces la o astfel de actiune ( Secretar
+        // sau Admin)
 
-		bd.login("Admin", "Root");
-		AccessBD access = bd.getAccess();
-		AccessAdminBD accessAdmin = (AccessAdminBD) access;// presupunem ca este
-															// admin
-		List<IntrareComisii> listaComisii = accessAdmin.selectComisii();
+        bd.login("Admin", "Root");
+        AccessBD access = bd.getAccess();
+        AccessAdminBD accessAdmin = (AccessAdminBD) access;// presupunem ca este
+        // admin
+        List<IntrareComisii> listaComisii = accessAdmin.selectComisii();
 
-		for (IntrareComisii c : listaComisii) {
-			CommitteListResponse comListRes = new CommitteListResponse();
-			comListRes.id = c.getId();
-			comListRes.numeComisie = "Comisie "+ comListRes.id;
-			comListRes.dataExaminare = c.getDataEvaluare();
-			committeeList.add(comListRes);
-		}
+        for (IntrareComisii c : listaComisii) {
+            CommitteListResponse comListRes = new CommitteListResponse();
+            comListRes.setId(c.getId());
+            comListRes.setNumeComisie("Comisie "+ comListRes.getId());
+            comListRes.setDataExaminare(c.getDataEvaluare());
+            committeeList.add(comListRes);
+        }
 
-		return committeeList;
-	}
+        return committeeList;
+    }
 
-	/*
-	 * 10. Descriere: Metoda ce returneaza profesorii dintr-o comisie. Input: -
-	 * id_comisie (Integer) Output: - Lista de profesori din acea comisie (o
-	 * lista cu id-urile acestora este destul, se poate folosi metoda nr. 5
-	 * pentru alte informatii).
-	 */
+    /*10.
+    Descriere: Metoda ce returneaza profesorii dintr-o comisie.
+    Input:  - id_comisie (Integer)
+    Output: - Lista de profesori din acea comisie
+    (o lista cu id-urile acestora este destul, se poate folosi metoda nr. 5 pentru alte informatii).*/
 
-	@Override
-	public List<IdResponse> getProfsFromCommitte(int idCommittee) {
+    @Override
+    public List<IdResponse> getProfsFromCommitte(int idCommitte) {
+        IntrareComisii comisie = bd.getAccess().getCommitteeById(idCommitte);
+        List<Integer> idProfiComisie = new ArrayList<Integer>();
 
-		IntrareComisii comisie = bd.getAccess().getCommitteeById(idCommittee);
-		List<Integer> idProfiComisie = new ArrayList<Integer>();
+        idProfiComisie.add(comisie.getIdProfSef()); // la indexul 0 se va afla
+        // id-ul Sefului de comisie
+        idProfiComisie.add(comisie.getIdProf2());// la indexul 1 se va afla
+        // id-ul profului2
+        idProfiComisie.add(comisie.getIdProf3());// la indexul 0 se va afla
+        // id-ul profului3
 
-		idProfiComisie.add(comisie.getIdProfSef()); // la indexul 0 se va afla
-													// id-ul Sefului de comisie
-		idProfiComisie.add(comisie.getIdProf2());// la indexul 1 se va afla
-													// id-ul profului2
-		idProfiComisie.add(comisie.getIdProf3());// la indexul 0 se va afla
-													// id-ul profului3
+        if (comisie.getIdProf4() != 0) // daca exista al 4 lea
+            // profesor(dizertatie) => id_ul
+            // profului 4 la indexul3
+            idProfiComisie.add(comisie.getIdProf4());
 
-		if (comisie.getIdProf4() != 0) // daca exista al 4 lea
-										// profesor(dizertatie) => id_ul
-										// profului 4 la indexul3
-			idProfiComisie.add(comisie.getIdProf4());
+        List<IdResponse> result = new ArrayList<IdResponse>();
+        for (Integer i : idProfiComisie) {
+            IdResponse idRes = new IdResponse();
+            idRes.id = idProfiComisie.get(i - 1);
+            result.add(idRes);
+        }
+        return result;
+    }
 
-		List<IdResponse> result = new ArrayList<IdResponse>();
-		for (Integer i : idProfiComisie) {
-			IdResponse idRes = new IdResponse();
-			idRes.id = idProfiComisie.get(i - 1);
-			result.add(idRes);
-		}
-		return result;
+    /*11.
+    Descriere: Metoda ce returneaza profesorii neasignati unei comisii.
+    Input:  - None
+    Output: - Lista de profesori neasignati
+    (o lista cu id-urile acestora este destul, se poate folosi metoda nr. 5 pentru alte informatii).*/
+    @Override
+    public List<IdResponse> getProfsWithoutCommitte(String token) {
+        List<IdResponse> profsWithoutCommitteeIdList = new ArrayList<IdResponse>();
+        List<IntrareProfesori> profsWithoutCommitteeList = bd.getAccess().getProfesorsWithoutCommittee();
 
-	}
-
-	/*
-	 * 11. Descriere: Metoda ce returneaza profesorii neasignati unei comisii.
-	 * Input: - None Output: - Lista de profesori neasignati (o lista cu
-	 * id-urile acestora este destul, se poate folosi metoda nr. 5 pentru alte
-	 * informatii).
-	 */
-	@Override
-	public List<IdResponse> getProfsWithoutCommitte(String token) {
-		List<IdResponse> profsWithoutCommitteeIdList = new ArrayList<IdResponse>();
-		List<IntrareProfesori> profsWithoutCommitteeList = bd.getAccess().getProfesorsWithoutCommittee();
-
-		for (IntrareProfesori p : profsWithoutCommitteeList) {
-			IdResponse idRes = new IdResponse();
-			idRes.id = p.getId();
-			profsWithoutCommitteeIdList.add(idRes);
-		}
-		return profsWithoutCommitteeIdList;
-	}
+        for (IntrareProfesori p : profsWithoutCommitteeList) {
+            IdResponse idRes = new IdResponse();
+            idRes.id = p.getId();
+            profsWithoutCommitteeIdList.add(idRes);
+        }
+        return profsWithoutCommitteeIdList;
+    }
 
     /*12.
     Descriere: Metoda ce va muta un profesor din orice comisie ar fi
-    (s-au daca nu este asignat unei comisii) in comisia specificata.
+    (sau daca nu este asignat unei comisii) in comisia specificata.
     Input:  - id_prof (Integer)
             - id_comisie (Integer)
     Output: - result (true - daca profesorul a fost mutat, false - din orice alt motiv)*/
     @Override
-    public boolean moveProfToCommitte(int idProf, int idCommitte) {
-        return false;
+    public boolean moveProfToCommitte(int idProf, int idCommitte, String token) {
+       
+      if(!(verifyIfCommitteExists(idCommitte, token) || verifyIfProfesorExists(idProf, token))){
+    	  return false;
+      }
+      BD test = new BD();
+      test.login("lacra.lacra", "lacra");
+      AccessBD accessSecretar = test.getAccess();
+
+      IntrareComisii comisieNoua = accessSecretar.getCommitteeById(idCommitte);
+      IntrareComisii comisieActuala = accessSecretar.getCommitteByProf(idProf);
+      if(comisieNoua.getIdProfSef()!= 0 && comisieNoua.getIdProf2()!=0 &&  comisieNoua.getIdProf3()!=0 ){  // pt dizertatie +comisie.getIdProf4()!=0  
+    	  return false;
+      }
+     
+      //vezi acum
+      else{
+    	
+      	  if( comisieNoua.getIdProfSef() == 0)
+      	  {
+      		  comisieNoua.setIdProfSef(idProf);
+      		  accessSecretar.updateComisie(comisieNoua);
+      		  
+        	  if(comisieActuala != null){		  
+      			  if(comisieActuala.getIdProf2()==idProf){
+      			  comisieActuala.setIdProf2(0);
+      			  accessSecretar.updateComisie(comisieActuala);
+      			  }
+      			  
+      			  else if(comisieActuala.getIdProf3()==idProf){
+      			  comisieActuala.setIdProf3(0);
+      			 accessSecretar.updateComisie(comisieActuala);
+          		 }
+      			  
+      			  else  if(comisieActuala.getIdProfSef()==idProf){
+      			  comisieActuala.setIdProfSef(0);
+      			  accessSecretar.updateComisie(comisieActuala);
+          		}
+      			  
+      		  }
+        	  
+      		  return true;
+      		  
+      	  }
+      	  
+      	  
+      	  else if( comisieNoua.getIdProfSef() == 0)
+     	  {
+     		  comisieNoua.setIdProfSef(idProf);
+     		  accessSecretar.updateComisie(comisieNoua);
+     		  
+     		  
+        	  if(comisieActuala != null){		  
+      			  if(comisieActuala.getIdProf2()==idProf){
+      			  comisieActuala.setIdProf2(0);
+      			  accessSecretar.updateComisie(comisieActuala);
+      			  }
+      			  
+      			  else if(comisieActuala.getIdProf3()==idProf){
+      			  comisieActuala.setIdProf3(0);
+      			 accessSecretar.updateComisie(comisieActuala);
+          		 }
+      			  
+      			  else  if(comisieActuala.getIdProfSef()==idProf){
+      			  comisieActuala.setIdProfSef(0);
+      			  accessSecretar.updateComisie(comisieActuala);
+          		}
+      			  
+      		  }
+        	  
+        	  
+     		  return true;
+     	  }
+      	  
+      	  
+      	 else if( comisieNoua.getIdProf2() == 0)
+      	  {
+      		comisieNoua.setIdProf2(idProf);
+      		accessSecretar.updateComisie(comisieNoua);
+      		
+      	  
+      	  if(comisieActuala != null){		  
+    			  if(comisieActuala.getIdProf2()==idProf){
+    			  comisieActuala.setIdProf2(0);
+    			  accessSecretar.updateComisie(comisieActuala);
+    			  }
+    			  
+    			  else if(comisieActuala.getIdProf3()==idProf){
+    			  comisieActuala.setIdProf3(0);
+    			 accessSecretar.updateComisie(comisieActuala);
+        		 }
+    			  
+    			  else  if(comisieActuala.getIdProfSef()==idProf){
+    			  comisieActuala.setIdProfSef(0);
+    			  accessSecretar.updateComisie(comisieActuala);
+        		}
+    			  
+    		  }
+      	  
+      	  
+      		return true;
+      	  }
+      	  
+      	  
+      	 else if( comisieNoua.getIdProf3() == 0)					
+    	  {
+    		comisieNoua.setIdProf3(idProf);
+    		accessSecretar.updateComisie(comisieNoua);
+    		
+    		  
+      	  if(comisieActuala != null){		  
+    			  if(comisieActuala.getIdProf2()==idProf){
+    			  comisieActuala.setIdProf2(0);
+    			  accessSecretar.updateComisie(comisieActuala);
+    			  }
+    			  
+    			  else if(comisieActuala.getIdProf3()==idProf){
+    			  comisieActuala.setIdProf3(0);
+    			 accessSecretar.updateComisie(comisieActuala);
+        		 }
+    			  
+    			  else  if(comisieActuala.getIdProfSef()==idProf){
+    			  comisieActuala.setIdProfSef(0);
+    			  accessSecretar.updateComisie(comisieActuala);
+        		}
+    			  
+    		  }
+      	  
+    		return true;
+    	  }
+      	  														// pentru dizertatie verificare pt prof4
+      	  	return false;    
+      }
+       
     }
 
     /*13.
@@ -245,7 +372,20 @@ public class DatabaseServiceImpl implements DatabaseService{
     Output: - Lista de studenti ce trebuie evaluati de forma: { int id_stud; String nume_stud; String prenume_stud; }   */
     @Override
     public List<StudentResponse> getEvaluateStudentsByCommitte(int idCommitte) {
-        return null;
+    	
+    	List<IntrareStudenti> listaStudenti = bd.getAccess().getStudentsByCommitte(idCommitte);
+    	List<StudentResponse> listaResposeStudenti= new ArrayList<StudentResponse> ();
+    	
+    	for(IntrareStudenti s : listaStudenti){
+    		StudentResponse studResp = new StudentResponse();
+    		studResp.setIdStudent(s.getId());
+    		studResp.setNumeStudent(s.getNume());
+    		studResp.setPrenumeStudent(s.getPrenume());
+    		listaResposeStudenti.add(studResp);
+    	}
+    	
+    	return listaResposeStudenti;   	
+		
     }
 
     /*14.
