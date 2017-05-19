@@ -30,11 +30,11 @@ public interface DatabaseService {
     //11
     List<IdResponse> getProfsWithoutCommitte(String token);
     //12
-    boolean moveProfToCommitte(int idProf, int idCommitte);
+    boolean moveProfToCommitte(int idProf, int idCommitte, String token);
     //13
     List<StudentResponse> getEvaluateStudentsByCommitte (int idCommitte);
     //14
-    boolean profNote (int idProf, int idStudent, int grade);
+    boolean profNote (int idProf, int idStudent, int gradeOral,int gradeProiect);
     //15
     List<StudentGuidedListResponse> getStudentGuided(int idProf);
     //16
